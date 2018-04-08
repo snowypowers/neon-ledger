@@ -2,7 +2,8 @@
   "name": "neon-ledger",
   "version": "0.0.1",
   "description": "Neon Ledger integration",
-  "main": "index.js",
+  "main": "./lib/index.js",
+  "typings": "./lib/index.d.ts",
   "author": "Yak Jun Xiang",
   "license": "MIT",
   "scripts": {
