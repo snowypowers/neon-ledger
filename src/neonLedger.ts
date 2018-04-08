@@ -1,40 +1,40 @@
 import { tx, u, wallet } from "@cityofzion/neon-js";
-import LedgerNode from "@ledgerhq/hw-transport-node-hid";
 import { TransportStatusError } from "@ledgerhq/hw-transport";
+import LedgerNode from "@ledgerhq/hw-transport-node-hid";
 import BIP44 from "./BIP44";
 import ErrorCode from "./ErrorCode";
 
 export default class NeonLedger {
-  path: string;
-  device?: LedgerNode;
+  /**
+   * Initialises by listing devices and trying to find a ledger device connected. Throws an error if no ledgers detected or unable to connect.
+   */
+  public static async init(): Promise<NeonLedger> {
+    const supported = await LedgerNode.isSupported();
+    if (!supported) {
+      throw new Error(`Your computer does not support the ledger!`);
+    }
+    const paths = await NeonLedger.list();
+    if (paths.length === 0) { throw new Error("USB Error: No device found."); }
+    const ledger = new NeonLedger(paths[0]);
+    return ledger.open();
+  }
+
+  public static async list(): Promise<string[]> {
+    return LedgerNode.list();
+  }
+
+  public path: string;
+  public device?: LedgerNode;
 
   constructor(path: string) {
     this.path = path;
   }
 
-  /**
-   * Initialises by listing devices and trying to find a ledger device connected. Throws an error if no ledgers detected or unable to connect.
-   * @return {Promise<NeonLedger>}
-   */
-  static async init() {
-    const supported = await LedgerNode.isSupported();
-    if (!supported)
-      throw new Error(`Your computer does not support the ledger!`);
-    const paths = await NeonLedger.list();
-    if (paths.length === 0) throw new Error("USB Error: No device found.");
-    const ledger = new NeonLedger(paths[0]);
-    return ledger.open();
-  }
-
-  static async list(): Promise<string[]> {
-    return LedgerNode.list();
-  }
 
   /**
    * Opens an connection with the selected ledger.
-   * @return {Promise<NeonLedger>}this
    */
-  async open(): Promise<NeonLedger> {
+  public async open(): Promise<NeonLedger> {
     try {
       this.device = await LedgerNode.open(this.path);
       return this;
@@ -47,8 +47,8 @@ export default class NeonLedger {
    * Closes the connection between the Ledger and the wallet.
    * @return {Promise<void>}}
    */
-  close(): Promise<void> {
-    if (this.device) return this.device.close();
+  public close(): Promise<void> {
+    if (this.device) { return this.device.close(); }
     return Promise.resolve();
   }
 
@@ -57,14 +57,14 @@ export default class NeonLedger {
    * @param {number} [acct] - Account that you want to retrieve the public key from.
    * @return {string} Public Key (Unencoded)
    */
-  async getPublicKey(acct: number = 0): Promise<string> {
+  public async getPublicKey(acct: number = 0): Promise<string> {
     const res = await this.send("80040000", BIP44(acct), [
       ErrorCode.VALID_STATUS
     ]);
     return res.toString("hex").substring(0, 130);
   }
 
-  getDeviceInfo() {
+  public getDeviceInfo(): string {
     try {
       return this.device!.device.getDeviceInfo();
     } catch (err) {
@@ -79,13 +79,14 @@ export default class NeonLedger {
    * @param {number[]} statusList - Statuses to return
    * @return {Promise<Buffer>} return value decoded to ASCII string
    */
-  async send(
+  public async send(
     params: string,
     msg: string,
     statusList: number[]
   ): Promise<Buffer> {
-    if (!params || params === null || params.length !== 8)
+    if (!params || params === null || params.length !== 8) {
       throw new Error(`params requires 4 bytes`);
+    }
     const [cla, ins, p1, p2] = params
       .match(/.{1,2}/g)!
       .map(i => parseInt(i, 16));
@@ -109,17 +110,17 @@ export default class NeonLedger {
    * @param {number} [acct]
    * @return {Promise<string>}
    */
-  async getSignature(data: string, acct: number = 0): Promise<string> {
+  public async getSignature(data: string, acct: number = 0): Promise<string> {
     data += BIP44(acct);
     let response = new Buffer("");
     const chunks = data.match(/.{1,510}/g) || [];
-    if (!chunks.length) throw new Error(`Invalid data provided: ${data}`);
+    if (!chunks.length) { throw new Error(`Invalid data provided: ${data}`); }
     for (let i = 0; i < chunks.length; i++) {
       const p = i === chunks.length - 1 ? "80" : "00";
       const chunk = chunks[i];
       const params = `8002${p}00`;
       try {
-        let res = await this.send(params, chunk, [ErrorCode.VALID_STATUS]);
+        const res = await this.send(params, chunk, [ErrorCode.VALID_STATUS]);
         response = res;
       } catch (err) {
         throw evalTransportError(err);
@@ -137,7 +138,7 @@ export default class NeonLedger {
  * @param {Error} err
  * @return {Error}
  */
-const evalTransportError = (err: TransportStatusError) => {
+const evalTransportError = (err: TransportStatusError): Error => {
   switch (err.statusCode) {
     case ErrorCode.APP_CLOSED:
       err.message = "Your NEO app is closed! Please login.";
@@ -154,7 +155,7 @@ const evalTransportError = (err: TransportStatusError) => {
  * @param {string} response - Signature in DER format
  */
 const assembleSignature = (response: string): string => {
-  let ss = new u.StringStream(response);
+  const ss = new u.StringStream(response);
   // The first byte is format. It is usually 0x30 (SEQ) or 0x31 (SET)
   // The second byte represents the total length of the DER module.
   ss.read(2);
