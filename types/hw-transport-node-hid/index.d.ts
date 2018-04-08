@@ -1,6 +1,6 @@
 declare module "@ledgerhq/hw-transport-node-hid" {
   import Transport from "@ledgerhq/hw-transport";
-  import HID from "node-hid";
+  import * as HID from "node-hid";
   export default class TransportNodeHid extends Transport<string> {
     device: HID.HID;
     ledgerTransport: boolean;
