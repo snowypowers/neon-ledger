@@ -14,7 +14,9 @@ export default class NeonLedger {
       throw new Error(`Your computer does not support the ledger!`);
     }
     const paths = await NeonLedger.list();
-    if (paths.length === 0) { throw new Error("USB Error: No device found."); }
+    if (paths.length === 0) {
+      throw new Error("USB Error: No device found.");
+    }
     const ledger = new NeonLedger(paths[0]);
     return ledger.open();
   }
@@ -29,7 +31,6 @@ export default class NeonLedger {
   constructor(path: string) {
     this.path = path;
   }
-
 
   /**
    * Opens an connection with the selected ledger.
@@ -48,7 +49,9 @@ export default class NeonLedger {
    * @return {Promise<void>}}
    */
   public close(): Promise<void> {
-    if (this.device) { return this.device.close(); }
+    if (this.device) {
+      return this.device.close();
+    }
     return Promise.resolve();
   }
 
@@ -114,7 +117,9 @@ export default class NeonLedger {
     data += BIP44(acct);
     let response = new Buffer("");
     const chunks = data.match(/.{1,510}/g) || [];
-    if (!chunks.length) { throw new Error(`Invalid data provided: ${data}`); }
+    if (!chunks.length) {
+      throw new Error(`Invalid data provided: ${data}`);
+    }
     for (let i = 0; i < chunks.length; i++) {
       const p = i === chunks.length - 1 ? "80" : "00";
       const chunk = chunks[i];
@@ -169,7 +174,7 @@ const assembleSignature = (response: string): string => {
   // We will need to ensure both integers are 32 bytes long
   const integers = [r, s].map(i => {
     if (i.length < 64) {
-      i = i.padStart(64, "0");
+      i = "0".repeat(i.length - 64) + i;
     }
     if (i.length > 64) {
       i = i.substr(-64);
