@@ -11,11 +11,13 @@ export default class NeonLedger {
   public static async init(): Promise<NeonLedger> {
     const supported = await LedgerNode.isSupported();
     if (!supported) {
-      throw new Error(`Your computer does not support the ledger!`);
+      return Promise.reject(
+        new Error(`Your computer does not support the ledger!`)
+      );
     }
     const paths = await NeonLedger.list();
     if (paths.length === 0) {
-      throw new Error("USB Error: No device found.");
+      return Promise.reject(new Error("USB Error: No device found."));
     }
     const ledger = new NeonLedger(paths[0]);
     return ledger.open();
@@ -103,7 +105,7 @@ export default class NeonLedger {
         statusList
       );
     } catch (err) {
-      throw evalTransportError(err);
+      return Promise.reject(evalTransportError(err));
     }
   }
 
@@ -132,7 +134,9 @@ export default class NeonLedger {
       }
     }
     if (response.readUIntBE(0, 2) === ErrorCode.VALID_STATUS) {
-      throw new Error(`No more data but Ledger did not return signature!`);
+      return Promise.reject(
+        new Error(`No more data but Ledger did not return signature!`)
+      );
     }
     return assembleSignature(response.toString("hex"));
   }
@@ -150,6 +154,9 @@ const evalTransportError = (err: TransportStatusError): Error => {
       break;
     case ErrorCode.MSG_TOO_BIG:
       err.message = "Your transaction is too big for the ledger to sign!";
+      break;
+    case ErrorCode.TX_DENIED:
+      err.message = "Transaction signing denied";
       break;
   }
   return err;
