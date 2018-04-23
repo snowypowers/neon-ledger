@@ -32,7 +32,7 @@ jobs:
     <<: *defaults
     steps:
       - checkout
-      - run:
+      - restore_cache:
           name: restore packages
           keys:
             - yarn-{{ checksum "yarn.lock" }}
@@ -40,11 +40,11 @@ jobs:
       - run:
           name: build
           command: yarn prepublishOnly
-test:
+  test:
     <<: *defaults
     steps:
       - checkout
-      - run:
+      - restore_cache:
           name: restore packages
           keys:
             - yarn-{{ checksum "yarn.lock" }}
