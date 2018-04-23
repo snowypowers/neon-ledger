@@ -1,0 +1,66 @@
+defaults: &defaults
+  working_directory: ~/repo
+  docker:
+    - image: circleci/node:8-stretch
+version: 2
+jobs:
+  setup:
+    <<: *defaults
+    steps:
+      - run:
+          name: "Versions"
+          command: |
+            node --version
+            npm --version
+            yarn --version
+      - checkout
+      # Download and cache dependencies
+      - restore_cache:
+          name: restore packages
+          keys:
+            - yarn-{{ checksum "yarn.lock" }}
+            - yarn-
+      - run:
+          name: yarn install
+          command: yarn
+      - save_cache:
+          name: cache packages
+          key: yarn-{{ checksum "yarn.lock" }}
+          paths:
+            - node_modules/
+  build:
+    <<: *defaults
+    steps:
+      - checkout
+      - restore_cache:
+          name: restore packages
+          keys:
+            - yarn-{{ checksum "yarn.lock" }}
+            - yarn-
+      - run:
+          name: build
+          command: yarn prepublishOnly
+  test:
+    <<: *defaults
+    steps:
+      - checkout
+      - restore_cache:
+          name: restore packages
+          keys:
+            - yarn-{{ checksum "yarn.lock" }}
+            - yarn-
+      - run:
+          name: test
+          command: yarn test
+
+workflows:
+  version: 2
+  build_and_test:
+    jobs:
+      - setup
+      - build:
+          requires:
+            - setup
+      - test:
+          requires:
+            - setup

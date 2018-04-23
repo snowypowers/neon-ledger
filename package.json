@@ -11,7 +11,7 @@
     "build": "./node_modules/.bin/tsc",
     "lint": "./node_modules/.bin/tslint -c ./tslint.json src/**/*.ts",
     "lint:fix": "./node_modules/.bin/tslint -c ./tslint.json src/**/*.ts --fix",
-    "prepublish": ""
+    "prepublishOnly": "yarn lint && yarn build"
   },
   "dependencies": {
     "@ledgerhq/hw-transport": "^4.7.3",
