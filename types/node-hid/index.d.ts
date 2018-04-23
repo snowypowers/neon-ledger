@@ -17,15 +17,16 @@ declare module "node-hid" {
     constructor(vid: number, pid: number);
     close(): void;
     pause(): void;
-    read(callback: (value: any, err: any) => void): any;
+    read(callback: (err: any, data: number[]) => void): void;
     readSync(): number[];
     readTimeout(time_out: number): number[];
-    sendFeatureReport(data: number[]): void;
+    sendFeatureReport(data: number[]): number;
     getFeatureReport(report_id: number, report_length: number): number[];
     getDeviceInfo(): string;
     resume(): void;
     on(event: string, handler: (value: any) => void): void;
-    write(values: number[]): void;
+    write(values: number[]): number;
+    setDriverType(type: string): void;
   }
   export function devices(): Device[];
 }

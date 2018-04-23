@@ -7,23 +7,36 @@
   "author": "Yak Jun Xiang",
   "license": "MIT",
   "scripts": {
-    "test": "",
+    "test": "./node_modules/.bin/jest",
     "build": "./node_modules/.bin/tsc",
     "lint": "./node_modules/.bin/tslint -c ./tslint.json src/**/*.ts",
     "lint:fix": "./node_modules/.bin/tslint -c ./tslint.json src/**/*.ts --fix",
     "prepublish": ""
   },
   "dependencies": {
-    "@cityofzion/neon-js": "^3.5.0",
     "@ledgerhq/hw-transport": "^4.7.3",
-    "@ledgerhq/hw-transport-node-hid": "^4.7.6"
+    "@ledgerhq/hw-transport-node-hid": "^4.7.6",
+    "@cityofzion/neon-js": "3.x"
+  },
+  "peerDependencies": {
+    "@cityofzion/neon-js": "3.x"
   },
   "devDependencies": {
+    "@types/jest": "^22.2.2",
     "@types/node": "^9.6.1",
     "@types/node-hid": "^0.5.2",
+    "jest": "^22.4.3",
     "prettier": "^1.11.1",
+    "ts-jest": "^22.4.2",
     "tslint": "^5.9.1",
     "tslint-config-prettier": "^1.10.0",
     "typescript": "^2.8.1"
+  },
+  "jest": {
+    "transform": {
+      "^.+\\.tsx?$": "ts-jest"
+    },
+    "testRegex": "(/__tests__/.*|(\\.|/)(test|spec))\\.(jsx?|tsx?)$",
+    "moduleFileExtensions": ["ts", "tsx", "js", "jsx", "json", "node"]
   }
 }
