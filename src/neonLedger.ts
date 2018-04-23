@@ -3,6 +3,7 @@ import { TransportStatusError } from "@ledgerhq/hw-transport";
 import LedgerNode from "@ledgerhq/hw-transport-node-hid";
 import BIP44 from "./BIP44";
 import ErrorCode from "./ErrorCode";
+import { assembleSignature } from "./utils";
 
 export default class NeonLedger {
   /**
@@ -11,13 +12,11 @@ export default class NeonLedger {
   public static async init(): Promise<NeonLedger> {
     const supported = await LedgerNode.isSupported();
     if (!supported) {
-      return Promise.reject(
-        new Error(`Your computer does not support the ledger!`)
-      );
+      throw new Error(`Your computer does not support the ledger!`);
     }
     const paths = await NeonLedger.list();
     if (paths.length === 0) {
-      return Promise.reject(new Error("USB Error: No device found."));
+      throw new Error("USB Error: No device found.");
     }
     const ledger = new NeonLedger(paths[0]);
     return ledger.open();
@@ -105,7 +104,7 @@ export default class NeonLedger {
         statusList
       );
     } catch (err) {
-      return Promise.reject(evalTransportError(err));
+      throw evalTransportError(err);
     }
   }
 
@@ -134,9 +133,7 @@ export default class NeonLedger {
       }
     }
     if (response.readUIntBE(0, 2) === ErrorCode.VALID_STATUS) {
-      return Promise.reject(
-        new Error(`No more data but Ledger did not return signature!`)
-      );
+      throw new Error(`No more data but Ledger did not return signature!`);
     }
     return assembleSignature(response.toString("hex"));
   }
@@ -160,34 +157,4 @@ const evalTransportError = (err: TransportStatusError): Error => {
       break;
   }
   return err;
-};
-
-/**
- * The signature is returned from the ledger in a DER format
- * @param {string} response - Signature in DER format
- */
-const assembleSignature = (response: string): string => {
-  const ss = new u.StringStream(response);
-  // The first byte is format. It is usually 0x30 (SEQ) or 0x31 (SET)
-  // The second byte represents the total length of the DER module.
-  ss.read(2);
-  // Now we read each field off
-  // Each field is encoded with a type byte, length byte followed by the data itself
-  ss.read(1); // Read and drop the type
-  const r = ss.readVarBytes();
-  ss.read(1);
-  const s = ss.readVarBytes();
-
-  // We will need to ensure both integers are 32 bytes long
-  const integers = [r, s].map(i => {
-    if (i.length < 64) {
-      i = "0".repeat(i.length - 64) + i;
-    }
-    if (i.length > 64) {
-      i = i.substr(-64);
-    }
-    return i;
-  });
-
-  return integers.join("");
 };

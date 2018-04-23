@@ -9,7 +9,7 @@ mock.list = jest.fn(() => {
 });
 
 mock.open = jest.fn((path: string) => {
-  return { path };
+  return Promise.resolve(this);
 });
 
 
